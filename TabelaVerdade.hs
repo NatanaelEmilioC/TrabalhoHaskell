@@ -32,22 +32,30 @@ validate s = isValid (reads s)
 
 choices :: [(Int, (String, IO ()))]
 choices = zip [1.. ] [
-   ("Avaliar formula", avalia)
- , ("Tabela Verdade", truthTable)
- , ("Tautologia", tautologia)
- , ("Contradição", contradicao)
- , ("Teste", teste True)
+   ("Avaliar formula", avalia) ,
+   ("Tabela Verdade", truthTable) ,
+   ("Tautologia", tautologia) , 
+   ("Contradição", contradicao) , 
+   ("Teste", teste getContents)
  ]
 
 executar :: Int -> IO ()
 executar n = doExec $ filter (\(i, _) -> i == n) choices
    where doExec ((_, (_,f)):_) = f
 
+lerEntrada :: 
+
+
 teste :: Bool -> IO()
 teste True = putStrLn "Teste Funcionando"
 
 --avalia :: Contexto -> Formula -> Bool
 avalia = undefined
+{-avalia (_, True) = True
+avalia (_, False) = False
+avalia (E p q) = avalia p && avalia q
+avalia (Ou p q) = avalia p || avalia q
+avalia (Nao q) = not(avalia q)-}
 
 --truthTable :: Formula -> TabelaVerdade
 truthTable = undefined
@@ -59,10 +67,10 @@ tautologia = undefined
 contradicao =  undefined
 
 
+{--
 clear :: IO ()
 clear = system "cls"
 
-{--
 eval :: Formula -> Bool
 eval (V) = True
 eval (F) = False
