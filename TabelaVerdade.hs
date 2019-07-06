@@ -1,98 +1,72 @@
-import System.Process
+import Data.Maybe (fromJust)
+import Data.List (nub)
 
 data Formula = Lit Bool
             | Var String
             | E Formula Formula
             | Ou Formula Formula
             | Nao Formula
+            | Imp Formula Formula
+            | Bic Formula Formula
         deriving ( Show , Eq )
 
 type Contexto = [(String, Bool)]
 
 type TabelaVerdade = [(Contexto, Bool)]
 
-menu :: IO ()
-menu = do
-      putStrLn . unlines $ map concatNums choices
-      choice <- getLine
-      case validate choice of
-         Just n  -> executar . read $ choice
-         Nothing -> putStrLn "Tente novamente"
+booleanos = [True, False]
 
-      menu 
+{-
+main = do 
+    putStrLn "Escolha a opcao:"
+    putStrLn "1- Avaliar expressao"
+    putStrLn "2- Tabela verdade"
+    putStrLn "3- Tautologia"
+    putStrLn "4- Contradição"
+    opcao <- getLine
+    putStrLn "Digite a entrada"
+    entrada <- getLine
+    case opcao of
+               "1" -> avalia entrada
+               "2" -> truthTable
+               "3" -> tautologia
+               "4" -> contradicao
+               "5" -> teste entrada-}
 
-   where concatNums (i, (s, _)) = show i ++ " - " ++ s
+teste :: String -> IO()
+teste "True" = putStrLn "Teste Funcionando"
 
-validate :: String -> Maybe Int
-validate s = isValid (reads s)
-   where isValid []            = Nothing
-         isValid ((n, _):_) 
-               | (n < 1) || (n > length choices) = Nothing
-               | otherwise     = Just n
+avalia :: Contexto -> Formula -> Bool
+avalia contexto (Lit x) = x
+avalia contexto (Var x) 
+    | fst(head(contexto)) == x = snd(head(contexto)) 
+    | otherwise = avalia (tail(contexto)) (Var x)
+avalia contexto (E x y) = avalia contexto x && avalia contexto y
+avalia contexto (Ou x y) = avalia contexto x || avalia contexto y
+avalia contexto (Nao x) = not(avalia contexto x)
+avalia contexto (Imp x y) = not (avalia contexto x) || avalia contexto y
+avalia contexto (Bic x y) = avalia contexto (Imp x y) && avalia contexto (Imp y x)
 
-choices :: [(Int, (String, IO ()))]
-choices = zip [1.. ] [
-   ("Avaliar formula", avalia) ,
-   ("Tabela Verdade", truthTable) ,
-   ("Tautologia", tautologia) , 
-   ("Contradição", contradicao) , 
-   ("Teste", teste getContents)
- ]
+truthTable :: Formula -> TabelaVerdade
+truthTable expressao = [(contexto, avalia contexto expressao) | contexto <- tabelaBooleanos (variaveis expressao)]
 
-executar :: Int -> IO ()
-executar n = doExec $ filter (\(i, _) -> i == n) choices
-   where doExec ((_, (_,f)):_) = f
+tabelaBooleanos :: [String] -> [[(String, Bool)]]
+tabelaBooleanos [] = [[]]
+tabelaBooleanos (a:as) = [(a,b) : r | b <- booleanos, r <- tabelaBooleanos as]
 
-lerEntrada :: 
+variaveis :: Formula -> [String]
+variaveis = nub . variaveisExpressao
 
+variaveisExpressao :: Formula -> [String]
+variaveisExpressao (Var v) = [v]
+variaveisExpressao (Nao e) = variaveisExpressao e
+variaveisExpressao (E x y) = variaveisExpressao x ++ variaveisExpressao y
+variaveisExpressao (Ou x y) = variaveisExpressao x ++ variaveisExpressao y
+variaveisExpressao (Imp x y) = variaveisExpressao x ++ variaveisExpressao y
+variaveisExpressao (Bic x y) = variaveisExpressao x ++ variaveisExpressao y
 
-teste :: Bool -> IO()
-teste True = putStrLn "Teste Funcionando"
-
---avalia :: Contexto -> Formula -> Bool
-avalia = undefined
-{-avalia (_, True) = True
-avalia (_, False) = False
-avalia (E p q) = avalia p && avalia q
-avalia (Ou p q) = avalia p || avalia q
-avalia (Nao q) = not(avalia q)-}
-
---truthTable :: Formula -> TabelaVerdade
-truthTable = undefined
-
---tautologia :: Formula -> Bool
-tautologia = undefined
-
---contradicao :: Formula -> Bool
-contradicao =  undefined
-
-
-{--
-clear :: IO ()
-clear = system "cls"
-
-eval :: Formula -> Bool
-eval (V) = True
-eval (F) = False
-eval (E p q) = eval p && eval q
-eval (Ou p q) = eval p || eval q
-eval (Nao q) = not(eval q)
-
-
-avalia :: [[Bool]] -> Bool
-avalia xs = foldr(||) False $ [ y | x <- xs , let y = foldr(&&) True x ]
-
-for2lst :: Formula -> [[Bool]]
-for2lst (F) = [eval F] : []
-for2lst (V) = [eval V] : []
-for2lst (Ou p q) = (for2lst p) ++ (for2lst q)
-for2lst (E p q) = [[avalia $ for2lst p]++[avalia $ for2lst q]] 
-
-lst2for :: [[Bool]] -> Formula
-lst2for (x:[]) = troca x
-lst2for (x:xs) = (Ou (troca x)(lst2for xs))
-troca (True : []) = V
-troca (False : []) = F
-troca (True : xs) = (E V (troca xs))
-troca (False : xs) = (E F (troca xs))
---}
+tautologia :: Formula -> Bool
+tautologia expressao = and $ map (==True) [snd(x) | x <- truthTable expressao]
+    
+contradicao :: Formula -> Bool
+contradicao expressao = and $ map (==False) [snd(x) | x <- truthTable expressao]
