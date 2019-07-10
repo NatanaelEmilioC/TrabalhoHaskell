@@ -2,8 +2,29 @@
 Trabalho prático II Haskell - Tabele
 Linguagens de programação
 Natanael Emilio da Costa
-Matricula - 16.8298
+Matricula - 16.1.8298
+
+As funções desenvolvidas no trabalho são:
+- main - menu para acesso às funcionalidades
+- subMenuAvalia - menu auxiliar para direcionar para a função de avaliação
+- subMenuTabelaVerdade - menu auxiliar para direcionar para a função de truthTable
+- subMenuTautologia - menu auxiliar para direcionar para a função de tautologia
+- subMenuContradição - menu auxiliar para direcionar para a função de contradição
+- subMenuTabelaHtml - menu auxiliar para direcionar para a rotina que gera o html com a tabela verdade
+- avalia - recebe um contexto no formato [("x", Bool)] e uma formula no formato E(Nao(Var"x"))(Lit True) e retorna a resultado da operação booleana
+- truthTable - recebe uma formula e retorna uma lista contendo a tabela verdade para a mesmo com os possiveis contextos e as soluções correspondentes
+- tabelaBooleanos - rotina auxiliar que gera as combinaçõs de variaveis de uma formula e contextos associados para contrução da tabela verdade
+- variaveisExpressao - rotina auxiliar que recebe uma formula e retorna todas as variaveis associadas à formula 
+- tautologia - rotina que recebe uma formala e verifica se a mesma pode ser classificada como uma tautologia
+- contradição - rotina que recebe uma formala e verifica se a mesma pode ser classificada como uma contradição
+- lerTabelaVerdade - recebe uma formula e estrutura a tabela verdade em padrão html para a mesma
+- controiTabelaVerdadeHtml - recebe uma formula e controi o conteudo para a tabela html
+- escreveNoHtml - recebe uma formula e escreve o html (Head, Body, Footer)
+- linhasTabelaVerdade - recebe uma tabela verdade e preenche a tabela html
+- escreveArquivo - recebe um html gerado e escreve no arquivo html "tabelaVerdade.html"
+
 -}
+
 import Data.Maybe (fromJust)
 import Data.List (nub)
 import System.IO
@@ -49,7 +70,7 @@ subMenuAvalia = do
     putStrLn "Digite a formula" -- solicita a formula para a função
     formula <- getLine
     let y = read formula :: Formula -- parse entrada para Formula
-    putStrLn $"saida : " ++ show(avalia x y)
+    putStrLn $"saida : " ++ show(avalia x y) -- escreve na tela a resposta
 
 -- submenu para gerar tabela verdade
 subMenuTabelaVerdade :: IO ()
@@ -57,7 +78,7 @@ subMenuTabelaVerdade = do
     putStrLn "Digite a formula" -- solicita a formula para a função
     entrada <- getLine
     let y = read entrada :: Formula -- parse entrada para Formula
-    putStrLn $"saida : " ++ show(truthTable y)
+    putStrLn $"saida : " ++ show(truthTable y)-- escreve na tela a resposta
 
 --submenu para avaliar tautologia    
 subMenuTautologia :: IO ()
@@ -65,7 +86,7 @@ subMenuTautologia = do
     putStrLn "Digite a formula" -- solicita a formula para a função
     entrada <- getLine
     let y = read entrada :: Formula -- parse entrada para Formula
-    putStrLn $"saida : " ++ show(tautologia y)
+    putStrLn $"saida : " ++ show(tautologia y)-- escreve na tela a resposta
 
 -- submenu para avaliar contradição
 subMenuContradicao :: IO ()
@@ -73,7 +94,7 @@ subMenuContradicao = do
     putStrLn "Digite a formula" -- solicita a formula para a função
     entrada <- getLine
     let y = read entrada :: Formula -- parse entrada para Formula
-    putStrLn $"saida : " ++ show(contradicao y)
+    putStrLn $"saida : " ++ show(contradicao y)-- escreve na tela a resposta
 
 -- submenu para gerar tabela verdade em html
 subMenuTabelaHtml :: IO ()
@@ -82,14 +103,14 @@ subMenuTabelaHtml = do
     entrada <- getLine
     let y = read entrada :: Formula -- parse entrada para Formula
     escreveArquivo $ escreveNoHtml y -- executa a escrita do html com a entrada
-    putStrLn $ "Tabela " ++ show(entrada) ++ " criada"
+    putStrLn $ "Tabela " ++ show(entrada) ++ " criada" -- escreve na tela caso a tabela tenha sido cria com sucesso
 
 {- Avalia uma formula e retorna a resposta booleana correspondente-}
 avalia :: Contexto -> Formula -> Bool
 avalia contexto (Lit x) = x
 avalia contexto (Var x) 
     | fst(head(contexto)) == x = snd(head(contexto)) 
-    | otherwise = avalia (tail(contexto)) (Var x)
+    | otherwise = avalia (tail(contexto)) (Var x) -- associa cada valor à sua devida variável
 avalia contexto (E x y) = avalia contexto x && avalia contexto y
 avalia contexto (Ou x y) = avalia contexto x || avalia contexto y
 avalia contexto (Nao x) = not(avalia contexto x)
@@ -99,7 +120,7 @@ avalia contexto (Bic x y) = avalia contexto (Imp x y) && avalia contexto (Imp y 
 {-Gera uma tabela verdade-}
 truthTable :: Formula -> TabelaVerdade
 truthTable expressao = do
-    [(contexto, avalia contexto expressao) | contexto <- tabelaBooleanos (nub $ variaveisExpressao expressao)] -- remove as variaveis repetidas
+    [(contexto, avalia contexto expressao) | contexto <- tabelaBooleanos (nub $ variaveisExpressao expressao)] -- gera a tabela e remove as variaveis repetidas
 
 {-Gera uma tabela de todas as combinações de variaveis e booleanos-}
 tabelaBooleanos :: [String] -> [[(String, Bool)]]
@@ -165,7 +186,7 @@ rodape = "<footer><p>Desenvolvido por: Natanael Emilio da Costa</p>"++
 --Escreve o arquivo html
 escreveArquivo :: Html -> IO()
 escreveArquivo conteudo = do 
-    let conteudoRenderizado = renderHtml conteudo
-    outh <- openFile "tabelaVerdade.html" WriteMode
-    hPutStr outh (conteudoRenderizado)
-    hClose outh
+    let conteudoRenderizado = renderHtml conteudo -- renderiza o html
+    outFile <- openFile "tabelaVerdade.html" WriteMode -- abre o modo de escrita para o arquivo html
+    hPutStr outFile (conteudoRenderizado) -- escreve o conteudo no arquivo
+    hClose outFile -- fecha o arquivo
